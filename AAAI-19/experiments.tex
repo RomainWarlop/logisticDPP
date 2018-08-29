@@ -1,0 +1,357 @@
+% !TEX root = multitaskDPP.tex
+
+\section{Experiments}
+We evaluate the performance of our model on the basket completion problem on several real-world datasets,
+and compare our performance to several state-of-the-art baselines. \\
+\\
+\noindent
+\textbf{MODELS}  
+\begin{itemize}
+\item \textbf{Our models}. To understand the impact of the different components
+of our model compared to the low-rank DPP model, we evaluated the following
+versions of our model:
+\begin{itemize}
+\item \textbf{\textsc{Logistic DPP}}: This version of our model is
+similar to the low-rank DPP model, with the addition of the logistic function.
+To determine what item to recommend we use a greedy approach, where we select
+the next item such that the probability of the basket completed with this item
+is the largest. 
+\item \textbf{\textsc{Multi-task log-DPP without bias}}:
+In this version of the model we set $D\equiv 0$, which allows us to measure the
+impact of capturing the item bias in a separate matrix.  The matrix $V$ encodes
+the latent factors of items present in the basket, while each matrix $R_{\tau}$
+encodes the latent factors of each target item $\tau$ to add to a basket. 
+\item \textbf{\textsc{Multi-task log-DPP}}: This is the full version of our
+model, with bias enabled.
+\end{itemize}
+Our datasets do not provide explicit negative information.  To generate negative
+feedback for our models we created negatives targets from observed baskets by
+sampling a random item among those items not in the basket. This approach could
+be improved through better negative sampling strategies, but since this is not
+part of our primary contributions we leave this investigation for future work. 
+\item \textbf{Baselines}. The primary goal of our work is to improve
+state-of-the-art results provided by DPPs and introduce new modeling
+enhancements to DPPs. However, for the sake of completeness we also compare with
+other strong baseline models provided by state-of-the-art collaborative
+filtering approaches.
+\begin{itemize}
+\item \textbf{\textsc{Poisson Factorization}}
+(PF)~\cite{DBLP:journals/corr/GopalanHB13} is a probabilistic matrix
+factorization model generally used for recommendation applications with implicit
+feedback. Since our datasets contain no user id information, we consider each
+basket to be a different user, and thus there are as many users as baskets in
+the training set. In practice this can cause memory issues, since the number of
+baskets can be very large. 
+\item \textbf{\textsc{Factorization Machines}}
+(FMs)~\cite{Rendle:2010:FM:1933307.1934620} is a general approach that models
+$d$th-order interactions using low-rank assumptions. FMs are usually used with
+$d=2$, since this corresponds to classic matrix factorization and because complexity 
+increases linearly with $d$, thus we used $d=2$ here. 
+Besides, there is no open source implementation of FM with $d>2$.
+As with PF, to learn the FM we consider each basket as a
+unique user. For fairness in comparison with our models, we also tried a FM with
+negative sampling based on item popularity.  However, we did not see any
+substantial improvement in model performance using this negative sampling
+technique. 
+\item \textbf{\textsc{Low-Rank DPP}}~\cite{DBLP:conf/aaai/GartrellPK17} is a
+low-rank DPP model, suitable for basket completion and other tasks, where the
+determinant of the sub-kernel corresponds to the probability that all the items
+will be bought.
+\item \textbf{\textsc{Bayesian Low-Rank
+DPP}}~\cite{DBLP:conf/recsys/GartrellPK16} is the Bayesian version of the
+low-rank DPP model.
+\item \textbf{\textsc{Associative Classifier}} (AC), is a algorithm that computes support of bought 
+set items in order to obtain completion rules. As \cite{DBLP:conf/aaai/GartrellPK17}, 
+we used the Classification Based on Associations (CBA) algorithm \cite{Liu:1998:ICA:3000292.3000305}, 
+available at \cite{arules}, with minimum support of $1.0\%$ and maximum confidence thresholds of $20.0\%$. 
+Unlike other models, AC do not provide estimates for all possibles sets. 
+Thus some metrics can not be computed like the MPR, detailed below, that we will use. 
+\item \textbf{\textsc{Recurrent Neural Network}} (RNN)~\cite{DBLP:journals/corr/HidasiKBT15} 
+adapted for session-based recommender system. RNN requires ordered sequences, thus we will only 
+test this model performance on the dataset where the ordering of the purchases within each basket 
+is available. We use the code of \cite{RNNcode}
+\end{itemize}
+\end{itemize}
+% Associative classification
+% methods~\cite{Agrawal:1993:MAR:170036.170072,Hipp:2000:AAR:360402.360421,Liu:1998:ICA:3000292.3000305}
+% are commonly used for basket completion, but the limits of these models in terms
+% of predictive quality and scalability has already been demonstrated
+% in~\cite{DBLP:conf/recsys/GartrellPK16}. Therefore, we focus on using more
+% robust models for our experiments. 
+Finally we also tried the implicit ALS matrix
+factorization algorithm~\cite{Hu:2008:CFI:1510528.1511352} as a baseline, but we
+did not see improvement over our other baseline models, so we do not report the
+results here. For all models we tried different parameter settings in terms of
+number of latents factors and regularization, and report the best results here.
+In the interest of reproducibility, all codes used for those experiments are available at
+ANONYMOUSREF.
+\\
+\\
+\noindent
+\textbf{DATASETS.} For our basket completion experiments we use the following three datasets:
+\begin{itemize}
+\item \textbf{Amazon Baby Registries} is a public dataset consisting of $110,006$
+registries and $15$ disjoint registry categories. For the purposes of comparison
+with~\cite{DBLP:conf/recsys/GartrellPK16}, we perform two experiments.  The
+first experiment is conducted using the diaper category, which contains $100$
+products and approximately $10$k baskets, composed of $2.4$ items per basket on
+average.  The second experiment is performed on the concatenation of the diaper,
+apparel, and feeding categories (sometimes noted here D.A.F for Diaper+Apparel+Feedings), 
+which contains $300$ products and approximately
+$17$k baskets, composed of $2.6$ items per basket on average. Since the
+categories are disjoint, no basket containing diaper products will be observed
+containing apparel products, for example. This concatenation of disjoint
+categories may present difficulties for classic matrix factorization
+models~\cite{DBLP:conf/recsys/GartrellPK16}, which may prevent these models from
+learning a good embedding of items.
+\item \textbf{Belgian Retail Supermarket} is a public
+dataset~\cite{brijs99using} that contains $88,163$ sets of items that have been
+purchased together, with a catalog of $16,470$ unique items. Each basket
+contains $9.6$ items on average. 
+AC could not be trained on this dataset because it does not scale with large item catalogs.
+\item \textbf{UK retail dataset} is a public dataset~\cite{Chen2012} that
+contains $22,034$ sets of items that have been purchased together, among a
+catalog of $4,070$ unique items.  This dataset contains transactions from a
+non-store online retail company that primarily sells unique all-occasion gifts,
+and many customers are wholesalers. Each basket contains $18.5$ items on
+average, with a number of very large baskets.  Modeling these large baskets
+requires having a very large number of latent factors for the low-rank DPP,
+leading to somewhat poor results for this model. This is not an issue for our
+model, due to the item bias that is captured in a separate matrix. However, for
+purposes of comparison, we have removed all baskets containing more than $100$
+items, but the low-Rank DPP still requires $100$ latent factors to model these
+baskets. 
+AC could not be trained on this dataset because it does not scale with large item catalogs.
+\item \textbf{Instacart} is, as far as we know, the only public dataset that contains the 
+order in which the product have been added to someone basket. It is formed of three datasets 
+containg online grocery shopping of more than $200,000$ Instacart users: a "train" dataset, 
+a "test" dataset, and a "prior" dataset. We only used the "train" dataset, removed items 
+that appeared less than $15$ times and basket of size lower than $3$. This end up in 
+considering $700,052$ sets of items and $10,531$ unique items.
+\end{itemize}
+
+\noindent
+\textbf{METRICS}. To evaluate the performance of each model we compute the Mean
+Percentile Rank and precision @$K$ for $K=5, 10$ and $20$:
+\begin{itemize}
+\item \textbf{Mean Percentile Rank (MPR)}: Given a basket $B$, we compute the
+percentile rank $PR_{i_B}$ of the held-out item, $i_B$. Let
+$p_i \doteq P(Y=1|B)$.  Then 
+\begin{equation}
+PR_{i_B} = \frac{\sum_{i=1}^p \one(p_{i_B} \geq p_i)}{p} \times 100\%
+\end{equation}
+The MPR is the average over all baskets in the test set:
+\begin{equation}
+MPR = \frac{\sum_{B \in \mathcal{T}} PR_{i_B}}{|\mathcal{T}|}
+\end{equation}
+where $\mathcal{T}$ is the set of all baskets in the test set. A MPR of $100\%$
+means that the held-out item always receives the highest predictive score, while
+a MPR of $50 \%$ corresponds to a random sorting. Higher MPR scores are better.
+\item \textbf{Precision@$K$} is the fraction of test baskets where the held-out
+item is in the top $K$ ranked items. 
+\begin{equation}
+\text{precision@}K = \frac{\sum_{B \in \mathcal{T}} \one(\text{rank}_{i_B} \leq K)}{|\mathcal{T}|}
+\end{equation}
+Higher precision@$K$ scores are better. 
+\end{itemize}
+
+We tested both the accuracy of our models and the ability of our multi-task DPP algorithm to capture directed completion rules. 
+For accuracy we used Amazon, Belgian Retail Supermarket and UK retail datasets and compared all previously introduced algorithms 
+except the RNN model since it requires ordered sequences which is not the case with these datasets. The Instacart dataset was then 
+used to validate our hypothesis on capturing directed completion rules by comparing the performance of Low-Rank DPP, RNN and Multi-task DPP
+on various experimental protocols.
+
+\subsection{Accuracy}
+For model evaluation we use a random split
+of $70\%$ of the data for training, and $30\%$ for testing. For each basket in
+the test set we remove one item at random. We then evaluate the model prediction
+according to the predicted score of this removed item using the metrics
+described below. 
+% However since there is no user dimension, one can not remove
+% all the user/basket interactions from the training set since it will be
+% impossible to perform recommendation for this user for PF and FM models. To
+% solve this issue, for all user/basket in the test set we remove one item at
+% random. All remaining items of this user/basket are added to the training. The
+% test set is then only formed of one item per user. This method favor training
+% for PF and FM since it will receive more data but this stage is mandatory. \\
+
+\noindent
+\textbf{RESULTS.} Looking at Table~\ref{tab:results} we see that classic
+collaborative filtering models sometimes have difficulty provide good
+recommendations in this basket-completion setting. Perhaps more surprising, but
+already described in~\cite{DBLP:conf/aaai/GartrellPK17}, is that except for the
+Belgian dataset, PF provides MPR performance that is approximately equivalent to
+a random model. For the Amazon diaper dataset this poor performance may be a
+result of the small size of each basket (around $2.4$ items per basket on
+average), thus each "user" is in a cold start situation, and it is difficult to
+provide good predictions. Poor performance on the diaper+apparel+feedings
+Amazon's dataset may result from the fact that, apart from the small basket size
+of $2.61$ items on average, this dataset is composed of three disjoint
+categories.  These disjoint categories can break the low-rank assumption for
+matrix factorization-based models, as discussed
+in~\cite{DBLP:conf/recsys/GartrellPK16}. This issue is somewhat mitigated by FM,
+due to the integration of an item bias into the model.  This item bias allows
+the model to capture item popularity and thus provide acceptable performance in
+some cases.
+\\
+\noindent
+\textbf{Low Rank DPP vs Multi-task DPP}.
+We now turn to a performance comparison between our primary baseline, 
+% the low-rank DPP model, and our model., where the relative improvements are
+% highlighted in Table~\ref{tab:LowRankDPPvsMTlogDPP}. 
+We see that our approaches
+provide a substantial increase in performance for both Amazon datasets, with
+improvements between $10\%$ and $70\%$. The first reason is that unlike the low-rank
+DPP, which models the probability that a set of items will be bought together, our
+approach directly models the basket completion task. In our multi-task
+DPP model, the extra dimensions allow the model to capture the correlation between each item in
+the basket and the target item, as well as the global coherence of the set.
+
+Regarding the three-category Amazon dataset, a good model should not be impacted
+by the fact the all the three categories are disjoint. Thus the precision@$K$
+scores should be approximately the same for both the single category and
+three-category datasets, since we observed similar performance for each category
+independently Since the MPR is $78\%$ for one category, the MPR on the
+three-category dataset should be around $93\%$, since on average for each
+category the target item is in $22$nd position over $100$ items. Therefore, the
+target item should be in $22$nd position over the $300$ items, resulting in a
+MPR of $1-22/300 = 93\%$. Our models come close to those numbers, but still
+exhibit some small degradation for the three-category dataset. Finally, we note
+that for this dataset, a model that sample an item at random from the right
+category would have a precision @$20$ of $20\%$, since there are $100$ items per
+category. The \textsc{low-rank DPP} model provide close to this level of
+performance. Taken together, these observations indicate our model is robust to
+the disjoint category problem, and explains the $70\%$ relative improvement we see for our
+model on the precision@$20$ metric. On the UK retail dataset the improvements of
+our algorithm are still substantial for precision@$K$, with relative improvement
+of between $20\%$ and $30\%$ (MPR is down by $5\%$). We also observe the same
+decrease in MPR for our \textsc{Logistic DPP} model, but precision@$K$
+similar to the \textsc{low-rank DPP}. Finally, on the Belgian Retail dataset we
+see that all models provide similar performance. For this dataset, baskets come
+from an offline supermarket, where it is possible that customers commonly
+purchased similar products at specific frequencies. Consequently it may be easy
+to capture frequent associations between purchased items, but very difficult to
+discover more unsual associations, which may explain why all models provide
+approximately the same performance.
+\\
+\\
+\noindent
+\textbf{Logistic DPP vs Multi-task DPP}.
+To better understand the incremental performance of our model, we focus on the
+results of the Logistic DPP and the multi-task log-DPP models. We see that
+the single-task model does not improve over the low-rank DPP on average,
+indicating that the logistic component of the model does not contribute to
+improved performance. However, we argue that this formulation may still be
+valuable in other classification applications, such as those with explicit
+negative feedback. For the multi-task log-DPP model, we see that the version of
+this model without bias is responsible for almost all of the performance
+improvement.  Some additional lift is obtained when capturing the item
+popularity bias in a separate matrix. Since most of the gain comes from the
+multi-task kernel, one may ask if we could use the multi-task kernel without the
+logistic function and obtain similar results. We believe that this is not the
+case for two reasons. First, since we are clearly in a classification setting,
+it is more appropriate to use a logistic model that is directly tailored for
+such applications. Second, without the logistic function, each slice of the
+tensor should define a probability distribution, meaning that the probability of
+purchasing an additional product should sum to one over all possible baskets.
+However, we could add an arbitrarily bad product that nobody would ever buy,
+resulting in the probability of buying that item in any basket would be $0$,
+which would break the distributional assumption. 
+
+\begin{table*}
+\begin{center}
+\begin{tabular}{ccccccc}
+\hline
+model & dataset & $r$ & MPR & Prec.@$5$ & Prec.@$10$ & Prec.@$20$ \\ \hline
+\textsc{Associative Classifier} & Amazon (diaper) & - & - & 16.66 & 16.66 & 16.66 \\
+\textsc{Poisson Factorization}$\star$ & Amazon (diaper) & 40 & 50.30 & 4.78 & 10.03 & 19.90 \\
+\textsc{Factorization Machines} & Amazon (diaper) & 60 & 67.92 & 24.01 & 32.62 & 46.25 \\
+%\textsc{implicit ALS} & Amazon (diaper) & 73.2 & 15.28 & 28.02 & 48.44 \\
+\textsc{Low Rank DPP}$\star$ & Amazon (diaper) & 30 & 71.65 & 25.48 & 35.80 & 49.98 \\
+\textsc{Bayesian Low Rank DPP}$\star$ & Amazon (diaper) & 30 & 72.38 & 26.31 & 36.21 & 51.51 \\
+\textsc{Logistic DPP} & Amazon (diaper) & 71.08 & 50 & 23.7 & 34.01 & 48.44 \\ 
+\textsc{multi-task logDPP no bias} & Amazon (diaper) & 50 & 77.5 & 32.7 & 45.77 & 61.00 \\ 
+\textbf{\textsc{multi-task logDPP}} & Amazon (diaper) & 50 & \textbf{78.41} & \textbf{34.73} & \textbf{47.42} & \textbf{62.58} \\ \hline
+
+\textsc{Associative Classifier} & Amazon (D.A.F) & - & - & 4.16 & 4.16 & 4.16 \\
+\textsc{Poisson Factorization}$\star$ & Amazon (D.A.F) & 40 & 51.36 & 4.16 & 5.88 & 9.08 \\
+\textsc{Factorization Machines} & Amazon (D.A.F) & 5 & 65.21 & 10.62 & 16.71 & 24.20 \\
+%\textsc{implicit ALS} & Amazon (diaper+apparel+feedings) & 89.51 & 15.78 & 23.37 & 42.15 \\
+\textsc{Low Rank DPP}$\star$ & Amazon (D.A.F) & 30 & 70.10 & 13.10 & 18.59 & 26.92 \\
+\textsc{Bayesian Low Rank DPP}$\star$ & Amazon (D.A.F) & 30 & 70.55 & 13.59 & 19.51 & 27.83 \\
+\textsc{Logistic DPP} & Amazon (D.A.F) & 60 & 69.61 & 12.65 & 19.8 & 27.86 \\ 
+\textsc{multi-task logDPP no bias} & Amazon (D.A.F) & 60 & 88.77 & 18.33 & 28.00 & 43.57 \\ 
+\textbf{\textsc{MT log DPP}} & Amazon (D.A.F) & 60 & \textbf{89.80} & \textbf{20.53} & \textbf{30.86} & \textbf{45.79} \\ \hline
+
+\textsc{Poisson Factorization}$\star$ & Belgian Retail Supermarket & 40 & 87.02 & 21.46 & 23.06 & 23.90 \\
+\textsc{Factorization Machines} & Belgian Retail Supermarket & 10 & 65.08 & 20.85 & 21.10 & 21.37 \\
+%\textsc{implicit ALS} & Belgian Retail Supermarket &  &  &  &  \\
+\textsc{Low Rank DPP}$\star$ & Belgian Retail Supermarket & 76 & 88.52 & 21.48 & 23.29 & 25.19 \\
+\textsc{Bayesian Low Rank DPP}$\star$ & Belgian Retail Supermarket & 76 & 89.08 & 21.43 & 23.10 & 25.12 \\
+\textsc{Logistic DPP} & Belgian Retail Supermarket & 75 & 87.35 & 21.17 & 23.11 & 25.77 \\ 
+\textsc{multi-task logDPP no bias} & Belgian Retail Supermarket & 75 & 87.42 & 21.02 & 23.35 & 25.13 \\ 
+\textsc{multi-task logDPP} & Belgian Retail Supermarket & 75 & 87.72 & 21.46 & 23.37 & 25.57 \\ \hline
+
+\textsc{Poisson Factorization} & UK Retail & 100 & 73.12 & 1.77 & 2.31 & 3.01 \\
+\textsc{Factorization Machines} & UK Retail & 5 & 56.91 & 0.47 & 0.83 & 1.50 \\
+%\textsc{implicit ALS} & UK Retail & 55.60 & 0.04 & 0.04 & 0.09 \\
+\textsc{Low Rank DPP} & UK Retail & 100 & \textbf{82.74} & 3.07 & 4.75 & 7.60 \\
+\textsc{Bayesian Low Rank DPP}$\dagger$ & UK Retail & - & 61.31 & 1.07 & 1.91 & 3.25 \\
+\textsc{Logistic DPP} & UK Retail & 100 & 75.23 & 3.18 & 4.99 & 7.83 \\ 
+\textsc{multi-task log DPP no bias} & UK Retail & 100 & 77.67 & 3.82 & 5.98 & 9.11 \\ 
+\textbf{\textsc{multi-task logDPP}} & UK Retail & 100 & 78.25 & \textbf{4.00} & \textbf{6.20} & \textbf{9.40} \\ 
+\hline
+\end{tabular}
+\caption{Result of all models on all datasets. $r$ denotes the number of latent factors. Best results within each dataset are in bold. Models results' marked with a $\star$ come directly from \cite{DBLP:conf/aaai/GartrellPK17,DBLP:conf/recsys/GartrellPK16} where more baselines can be found. Other models have been retrained for this paper with same training and testing set sizes as \cite{DBLP:conf/aaai/GartrellPK17,DBLP:conf/recsys/GartrellPK16}. $\dagger$ Usually Bayesian Low Rank DPP shows little improvement over classic Low Rank DPP, however for the UK retail dataset we had to reduce the number of samples used for learning because of memory issue which could explain the bad result.}
+\label{tab:results}
+\end{center}
+\end{table*}
+
+% \begin{table*}
+% \begin{center}
+% \begin{tabular}{ccccc}
+% \hline
+% dataset & MPR & Prec.@$5$ & Prec.@$10$ & Prec.@$20$ \\ \hline
+% Amazon (diaper) & $\textbf{9.43\%}$ & $\textbf{36.28\%}$ & $\textbf{32.47\%}$ & $\textbf{25.2\%}$ \\
+% Amazon (diaper+apparel+feedings) & $\textbf{28.11\%}$ & $\textbf{56.71\%}$ & $\textbf{66.01\%}$ & $\textbf{70.11\%}$ \\
+% Belgian Retail Supermarket & $-0.9\%$ & $-0.1\%$ & $0.34\%$ & $1.52\%$ \\
+% UK Retail & $-5.43\%$ & $\textbf{30.29\%}$ & $\textbf{30.53\%}$ & $\textbf{23.68\%}$ \\
+% \end{tabular}
+% \caption{Improvement of \textsc{multi-task log DPP} over \textsc{Low Rank DPP} performances in percentage.}
+% \label{tab:LowRankDPPvsMTlogDPP}
+% \end{center}
+% \end{table*}
+
+\subsection{Capturing directed completion rules}
+
+In order to validate the capacity of our model to capture directed completion rules we performed three experimental protocols 
+on the Instacart dataset, which is the only one to have ordered sequences. Each protocol vary in the way we removed the item to predict from the basket:
+\begin{enumerate}
+	\item As for previous experiements, we removed one item at random. For Low-Rank DPP this is done only in the test set, for Multi-Task DPP both for training and test sets.
+	\item We removed the last added item to the basket. For Low-Rank DPP this is done only in the test set, for Multi-Task DPP both for training and test sets. Since we considered ordered sequence, we also tested the RNN model here.
+	\item We removed one item at random in the training set, and the last added item in the test set. Here we only evaluate the performance of our Multi-Task DPP.
+\end{enumerate}
+
+\noindent
+\textbf{RESULTS.}
+First, looking at table~\ref{tab:instacartresults} and comparing Multi-Task DPP results of protocols (2) and (3), we see that the algorithm is much more precise to predict the last added item in the test set when training is also done by removing the last added item. This support the idea that the order in which the items are added in the basket plays an important role, otherwise both protocols would give similar results. Second, comparing results of protocols (1) and (2), we see that Multi-Task DPP performance is lower when trained to predict a randomly removed item than when trained to predict the last added item whereas it is the other way around for Low-Rank DPP but by a smaller margin. This further support the fact that Low-Rank DPP, although well suited to compute co-occurence probabilities, misses directed completion rules. Finally, we see that, quite surprisingly, RNN model does not obtain a good performance. This poor performance may come from the fact that the basket length are too small for the RNN to learn correctly. 
+
+\begin{table*}
+\begin{center}
+\begin{tabular}{cccccc}
+\hline
+model & protocol & MPR & Prec.@$5$ & Prec.@$10$ & Prec.@$20$ \\ 
+\hline
+\textsc{Low Rank DPP} & (1) & 76.46 & 7.37 & 8.07 & 9.23 \\
+\textsc{Multi-Task DPP} & (1) & 80.46 & 4.62 & 7.23 & 10.51 \\
+\hline
+\textsc{Low Rank DPP} & (2) & 61.16 & 7.49 & 8.05 & 8.8 \\
+\textsc{RNN} & (2) & 73.31 & 1.08 & 1.99 & 3.2 \\
+\textsc{Multi-Task DPP} & (2) & \textbf{89.99} & \textbf{7.99} & \textbf{14.34} & \textbf{20.16} \\
+\hline
+\textsc{Multi-Task DPP} & (3) & 80.65 & 5.23 & 6.05 & 9.72
+\end{tabular}
+\caption{Performance of the models on Instacart dataset. All models used $80$ latent factors.}
+\label{tab:instacartresults}
+\end{center}
+\end{table*}

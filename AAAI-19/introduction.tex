@@ -1,0 +1,84 @@
+\section{Introduction}
+Increasing the number of items in the average shopping basket is a major concern for online
+retailers. While there are a wide range of possibles strategies, this work
+focuses on the algorithm responsible for proposing a set of items that is best suited to completing
+the current shopping basket of the user.
+
+Basket analysis and completion is a very old task for machine
+learning. For many years association rule
+mining~\cite{Agrawal:1993:MAR:170036.170072,Hipp:2000:AAR:360402.360421,Liu:1998:ICA:3000292.3000305} has
+been the state-of-the-art. Even though there are different variants of this
+algorithm, the main principle involves computing the conditional probability of
+buying an additional product by counting co-occurrences in past observations.
+Because of the computational cost and robustness, modern approaches favor item-to-item
+collaborative filtering~\cite{1167344}, or using logistic regression to predict if a
+user will purchase an item based on binary purchase scores obtained from market
+baskets~\cite{LEE2005700}.
+
+As reported in related work vanilla collaborative filtering needs to be extended to correctly capture diversity among products. 
+Practitioners often mitigate this problem by adding constraints to the recommended
+set of items. As an example, when using categorical information it is possible
+to always recommend one pair of matching shoes when trousers are added to
+the basket, even if natural co-sales could lead to the recommendation of other trousers.
+In this situation the presence of diversity in the recommendations is not
+directly driven by the learning algorithm, but by side information and
+expert knowledge.  Ref.~\cite{Teo:2016:APD:2959100.2959171} proposes an effective
+Bayesian method for learning the weights of the categories in the case of visual search
+when categories are known.
+
+Sometimes we need to learn diversity without relying on extra information. Naive
+learning of diversity directly from the data without using side information
+comes at a high computational cost because the number of possible sets grows exponentially with the 
+number of items. 
+The issue is not trivial, even when we want
+to be able to add only one item to an existing set, and becomes even harder when we
+want to add more than one item with the idea of maximizing the diversity of the
+final recommended set.
+
+Refs.~\cite{DBLP:conf/aaai/GartrellPK17,DBLP:conf/recsys/GartrellPK16} address this
+combinatorial problem using a model based on Determinantal Point Processes
+(DPPs) for basket completion. DPPs are elegant probabilistic models of repulsion
+from quantum physics, which are used for a variety of tasks in machine
+learning~\cite{DBLP:conf/icml/GautierBV17,Kulesza:2012:DPP:2481023,Foulds2013DiversePW}.
+They allow sampling a diverse set of points, with similarity being encoded
+using a positive semi-definite matrix called the kernel.  Efficient algorithms
+for marginalization and conditioning DPPs are available. From a practical
+perspective, learning the DPP kernel is a challenge because the associated
+likelihood is not convex, and learning it from observed sets of items is
+conjectured to be NP-hard~\cite{Kulesza:2012:DPP:2481023}.
+
+For basket completion it is natural to consider that sets are the baskets which
+converted to sales. In this setting, the DPP is parameterized by a kernel matrix of
+size $p \times p$, where $p$ is the size of the catalog. 
+Thus the number of parameters to fit grows quadratically with 
+the number of items and the computational complexity cubicly
+As learning a full-rank
+DPP is hard,~\cite{DBLP:conf/aaai/GartrellPK17} proposes regularizing the DPP by
+constraining the kernel to be low rank. This regularization also improves
+generalization and offers more diversity in recommendations without hurting
+predictive performance. In fact in many settings the predictive quality is also
+improved, making the DPP a very desirable tool for modeling baskets. Moreover,
+the low rank assumption also enables substantially better runtime performance
+compared to a full-rank DPP.
+
+Nevertheless, because of the definition of DPP, as described in
+Section~\ref{sec:model}, this low-rank assumption for the kernel means that any
+possible baskets with more items than the chosen rank will receive a
+probability estimation of $0$. This technique is thus impossible to use for
+large baskets, and some other regularizations of the DPP kernel can be more
+interesting The contributions of this paper are threefold:
+\begin{itemize}
+	\item We modify the constraints over the kernel to support large baskets
+    \item We model the probability over all baskets by adding a logistic
+    function on the determinant computed from the DPP kernel. We adapt the
+    training procedure to handle this nonlinearity, and evaluate our model
+    on three popular basket datasets.
+    \item By leveraging tensor factorization we propose a new way to regularize the kernel among of set of task. 
+    This approach also leads to enhanced predictive quality.
+ \end{itemize}
+We also show that these ideas can be combined for further improvements to
+predictive quality, allowing our multi-task DPP model to outperform
+state-of-the-art models by a large margin.
+
+In the following section we introduce our proposed algorithm before validating its effectiveness on various real world dataset in the next section. 
+We then discuss related work before concluding and introducing possible future works. 

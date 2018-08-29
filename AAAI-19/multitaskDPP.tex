@@ -1,0 +1,67 @@
+\def\year{2019}\relax
+%File: formatting-instruction.tex
+\documentclass[letterpaper]{article} %DO NOT CHANGE THIS
+\usepackage{aaai19}  %Required
+\usepackage{times}  %Required
+\usepackage{helvet}  %Required
+\usepackage{courier}  %Required
+\usepackage{url}  %Required
+
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{bbm}
+\usepackage{ulem}
+
+\frenchspacing  %Required
+\setlength{\pdfpagewidth}{8.5in}  %Required
+\setlength{\pdfpageheight}{11in}  %Required
+
+\usepackage[colorinlistoftodos, textwidth=17mm]{todonotes}
+\usepackage{color}
+
+  \pdfinfo{
+/Title (Multi Task Determinantal Point Processes for Recommendation)
+/Author (Anonymous)}
+\setcounter{secnumdepth}{0} 
+
+\newcommand{\todoa}[1]{\todo[color=yellow, inline]{#1}}
+\newcommand{\todoaout}[1]{\todo[color=yellow]{\tiny#1}}
+
+% Def
+\def\ee{\mathbb{E}}
+\def\pp{\mathbb{P}}
+\def\rr{\mathbb{R}}
+\def\ii{\mathbb{I}}
+\def\nn{\mathbb{N}}
+
+\def\mcD{\mathcal{D}}
+\def\mcI{\mathcal{I}}
+\def\mcB{\mathcal{B}}
+\def\mcZ{\mathcal{Z}}
+\def\mcU{\mathcal{U}}
+
+\def\bY{\textbf{Y}}
+\def\one{\mathbbm{1}}
+
+\begin{document}
+
+\title{Multi Task Determinantal Point Processes for Recommendation}
+\author{Anonymous authors
+}
+\maketitle
+
+% The maximum length is 8 pages (plus up to 1 page references) - no indication about supplementary material ?
+\input{abstract.tex}
+
+\maketitle
+\input{introduction.tex}
+\input{model.tex}
+\input{experiments.tex}
+\input{relatedwork.tex}
+\input{conclusion.tex}
+
+\bibliographystyle{aaai}
+\bibliography{biblio} 
+\end{document}
